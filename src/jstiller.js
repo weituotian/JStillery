@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2014 Igor null <m1el.2027@gmail.com> for https://github.com/m1el/esdeobfuscate
-  
-  Copyright (C) 2015 Stefano Di Paola <stefano.dipaola@mindedsecurity.com> for the fork of 
+
+  Copyright (C) 2015 Stefano Di Paola <stefano.dipaola@mindedsecurity.com> for the fork of
   esdebofuscate to jstiller.js
 
   Redistribution and use in source and binary forms, with or without
@@ -39,12 +39,13 @@ var collectHTMLData = require("./libs/htmlParse").collectHTMLData
 var USE_PARTIAL = typeof process.env.USE_PARTIAL !== 'undefined' ? process.env.USE_PARTIAL : true;
 
 function genToStringObj(a) {
-  return function() {
+  return function () {
     return "[object " + a + "]"
   }
 }
+
 function genToStringNativeFun(a) {
-  return function() {
+  return function () {
     return "function " + a + "() {\n    [native code]\n}"
   }
 }
@@ -64,7 +65,7 @@ function genToStringNativeFun(a) {
       textContent: "",
       innerHTML: ""
     },
-    write: function() {
+    write: function () {
       this.body.innerHTML += Array.prototype.slice.call(arguments).join("")
     }
   };
@@ -79,7 +80,7 @@ function genToStringNativeFun(a) {
 })();
 
 var inLoop = 0;
-var jstiller = (function() {
+var jstiller = (function () {
   const PARAMS_NAME = '.params';
   const OBJECTS_NAME = '.objects';
   const EXP_THIS_OBJ = '.this'; // Scope[THIS]
@@ -101,109 +102,109 @@ var jstiller = (function() {
   ];
   // Missing += etc
   var boperators = {
-    '+': function(a, b) {
+    '+': function (a, b) {
       return a + b;
     },
-    '-': function(a, b) {
+    '-': function (a, b) {
       return a - b;
     },
-    '*': function(a, b) {
+    '*': function (a, b) {
       return a * b;
     },
-    '**': function(a, b) {
+    '**': function (a, b) {
       return a ** b;
     },
-    '/': function(a, b) {
+    '/': function (a, b) {
       return a / b;
     },
-    '||': function(a, b) {
+    '||': function (a, b) {
       return a || b;
     },
-    '&&': function(a, b) {
+    '&&': function (a, b) {
       return a && b;
     },
-    '|': function(a, b) {
+    '|': function (a, b) {
       return a | b;
     },
-    '&': function(a, b) {
+    '&': function (a, b) {
       return a & b;
     },
-    '%': function(a, b) {
+    '%': function (a, b) {
       return a % b;
     },
-    '^': function(a, b) {
+    '^': function (a, b) {
       return a ^ b;
     },
-    '<<': function(a, b) {
+    '<<': function (a, b) {
       return a << b;
     },
-    '>>': function(a, b) {
+    '>>': function (a, b) {
       return a >> b;
     },
-    '>>>': function(a, b) {
+    '>>>': function (a, b) {
       return a >>> b;
     },
-    '==': function(a, b) {
+    '==': function (a, b) {
       return a == b;
     },
-    '===': function(a, b) {
+    '===': function (a, b) {
       return a === b;
     },
-    '!=': function(a, b) {
+    '!=': function (a, b) {
       return a != b;
     },
-    '!==': function(a, b) {
+    '!==': function (a, b) {
       return a !== b;
     },
-    '>=': function(a, b) {
+    '>=': function (a, b) {
       return a >= b;
     },
-    '<=': function(a, b) {
+    '<=': function (a, b) {
       return a <= b;
     },
-    '<': function(a, b) {
+    '<': function (a, b) {
       return a < b;
     },
-    '>': function(a, b) {
+    '>': function (a, b) {
       return a > b;
     },
     // 'in': function(a, b) { return a in b; }, //mm not sure it's so simple..
-    '+=': function(a, b) {
+    '+=': function (a, b) {
       return a + b;
     }
-  /** missing -= *= /= ... */
+    /** missing -= *= /= ... */
   };
   var uoperators = {
-    '!': function(a) {
+    '!': function (a) {
       return !a;
     },
-    '~': function(a) {
+    '~': function (a) {
       return ~a;
     },
-    '+': function(a) {
+    '+': function (a) {
       return +a;
     },
-    '-': function(a) {
+    '-': function (a) {
       return -a;
     },
-    '--': function(a) {
+    '--': function (a) {
       return --a;
     },
-    '++': function(a) {
+    '++': function (a) {
       return ++a;
     },
-    'typeof': function(a) {
+    'typeof': function (a) {
       return typeof a;
     }
   };
 
 
   /**
-  Finds the path proparr of the object represented in propObj AST.
-  returns:   {result:FinalProp,isNative:false} if fully resolved
-  returns:   {result:LastPropertyResolved,isNative:true,k:latestPropId} if native
-  returns:   {result:undefined,isNative:false} if not found
-  */
+   Finds the path proparr of the object represented in propObj AST.
+   returns:   {result:FinalProp,isNative:false} if fully resolved
+   returns:   {result:LastPropertyResolved,isNative:true,k:latestPropId} if native
+   returns:   {result:undefined,isNative:false} if not found
+   */
   function findPropFromAST(propObj, proparr) {
     var latest = null;
     var properties;
@@ -222,7 +223,7 @@ var jstiller = (function() {
                 result: properties[pO_idx],
                 isNative: false
               };
-            } else { //middle of chain 
+            } else { //middle of chain
               //is an Array, we get the actual value
               latest = properties[proparr[pa_idx]]; //Save it
               //Let's get in the next properties:
@@ -244,7 +245,7 @@ var jstiller = (function() {
               isNative: true,
               k: pa_idx
             }
-          } else { //MMMMM not in 
+          } else { //MMMMM not in
             break;
           }
           continue;
@@ -322,12 +323,12 @@ var jstiller = (function() {
                 // We're in the middle...of something undefined..
                 // Usually a VM would throw an exception
                 // a={}; a.f.h (Accessing h of undefined)
-                // We return 
+                // We return
                 throw Error("Should not happen");
-              /*return {
-                result: undefined,
-                isNative: false
-              }*/
+                /*return {
+                  result: undefined,
+                  isNative: false
+                }*/
               }
             }
           }
@@ -374,6 +375,7 @@ var jstiller = (function() {
       isNative: false
     };
   }
+
   function findElemFromAST(propObj, proparr, create) {
 
     debug('findElemFromAST', propObj, proparr)
@@ -390,7 +392,7 @@ var jstiller = (function() {
           }
         } else {
           break;
-      }
+        }
     } catch (exc) {
       console.error("[EE]", exc);
       process.exit(1)
@@ -400,6 +402,7 @@ var jstiller = (function() {
 
     return null;
   }
+
   /**
    * [solveNode description]
    * @param  {[type]} node  [description]
@@ -413,7 +416,7 @@ var jstiller = (function() {
            return findScope(node,scope)
         }else if(_type==="MemberExpression"){
            return resolveMemberExpression(node,scope)
-        } 
+        }
       }*/
   //AST Type By .type
   //returns String, Number, Object, Array
@@ -434,7 +437,7 @@ var jstiller = (function() {
    * @param  {[type]} _retob [description]
    * @return {[type]}        [description]
    * Data una MemberExpression
-  {
+   {
           "type": "MemberExpression",
           "computed": false,
           "object": {
@@ -455,7 +458,7 @@ var jstiller = (function() {
           }
         }
    extracts:
-  { name: objectName,
+   { name: objectName,
    proparr:[arrays],
    isNativeProp
    } <- a.b.c > [name:a,proparr:["b",c"]
@@ -470,7 +473,7 @@ var jstiller = (function() {
       _name = _retob.type === 'ThisExpression' ? '.this' : _retob.name;
       if (_retob.property &&
         (typeof _retob.property.name !== "undefined" ||
-        typeof _retob.property.value != "undefined"))
+          typeof _retob.property.value != "undefined"))
         _proparr.unshift(_retob.property.name ? _retob.property.name : _retob.property.value)
 
       if (!_name) { //Is Native
@@ -494,20 +497,21 @@ var jstiller = (function() {
   }
 
   /**
-  * [resolveMemberExpression Given a MemberExpression returns if it's resolution to the value]
-  * @param  {[type]} astMemberExpr [description]
-  * @return {   scope:_tscope,
-  *             isNative:true|false,
-  *             isGLobal:true|false,
-  *             resolved:_lval|false,
-  *             proparr:_obj.proparr,
-  *             varname:_obj.name}  [description]
-  * {resolved:false} se nn trova
-  * {resolved:true, isGlobal:true,proparr:theWholePropChain} se e' globale
-  * 
-  * 
-  */
+   * [resolveMemberExpression Given a MemberExpression returns if it's resolution to the value]
+   * @param  {[type]} astMemberExpr [description]
+   * @return {   scope:_tscope,
+   *             isNative:true|false,
+   *             isGLobal:true|false,
+   *             resolved:_lval|false,
+   *             proparr:_obj.proparr,
+   *             varname:_obj.name}  [description]
+   * {resolved:false} se nn trova
+   * {resolved:true, isGlobal:true,proparr:theWholePropChain} se e' globale
+   *
+   *
+   */
   var global_eq = ["window", "self", "top", "content", "parent"]
+
   function resolveMemberExpression(astMemberExpr, scope, recurse) {
     var _sval,
       _lval,
@@ -523,8 +527,8 @@ var jstiller = (function() {
         debug("GLOBAL!!!")
         _obj.name = _obj.proparr[0];
         _obj.proparr = _obj.proparr.slice(1);
-    }
-    if (_obj && _obj.name in scope) { //was it found in scope? 
+      }
+    if (_obj && _obj.name in scope) { //was it found in scope?
       debug("In SCOPE!")
       _tscope = findScope(_obj.name, scope);
       _sval = _tscope.value;
@@ -538,7 +542,7 @@ var jstiller = (function() {
           scope: false
         };
 
-      _lval = astMemberExpr.property; // last one 
+      _lval = astMemberExpr.property; // last one
 
       if (_sval.pure_global) {
         return {
@@ -567,11 +571,11 @@ var jstiller = (function() {
       if (_sval.value[CURRENT_OBJ].type === "ObjectExpression" || _sval.value[CURRENT_OBJ].type === "ArrayExpression") {
         _lval = findPropFromAST(_sval.value[CURRENT_OBJ], _obj.proparr);
         debug("Here", _lval)
-      // _lval will be
-      // returns:   {result:FinalProp,isNative:false} if fully resolved
-      // returns:   {result:LastPropertyResolved,isNative:true,k:latestPropId} if native
-      // returns:   {result:undefined,isNative:false} if not found
-      //_lval = _lval || _sval.value[CURRENT_OBJ];
+        // _lval will be
+        // returns:   {result:FinalProp,isNative:false} if fully resolved
+        // returns:   {result:LastPropertyResolved,isNative:true,k:latestPropId} if native
+        // returns:   {result:undefined,isNative:false} if not found
+        //_lval = _lval || _sval.value[CURRENT_OBJ];
       } else { // Not from Array , not from Object! what about CCC.KnownProp??
         _lval = {
           result: _sval.value[CURRENT_OBJ],
@@ -620,17 +624,17 @@ var jstiller = (function() {
   }
 
   function objCopy(obj) {
-    return JSON.parse(JSON.stringify(obj, function(k, v) {
+    return JSON.parse(JSON.stringify(obj, function (k, v) {
       if (k === "" || k !== "parent") return v;
     }));
   }
 
   /***
-  *Search Key in scope chain.
-  returns false if not present in any scope
-  else
-          {scope,value}
-  */
+   *Search Key in scope chain.
+   returns false if not present in any scope
+   else
+   {scope,value}
+   */
   function findScope(key, scope) {
     if (!scope || scope.__proto__ === scope) {
       return false;
@@ -646,7 +650,7 @@ var jstiller = (function() {
 
 
   function match(o, pattern) {
-    return Object.keys(pattern).every(function(k) {
+    return Object.keys(pattern).every(function (k) {
       if (typeof pattern[k] !== 'object') {
         return o && pattern[k] === o[k];
       } else {
@@ -711,8 +715,9 @@ var jstiller = (function() {
       raw: JSON.stringify(value)
     };
   }
+
   /**
-   * Tries toString method called by + and by explicit calls to join or 
+   * Tries toString method called by + and by explicit calls to join or
    * toString
    * [toString reproduce the toString casting from the AST]
    * @param  {[ast node]} n the node
@@ -757,7 +762,7 @@ var jstiller = (function() {
     }
 
     if (n.type === "MemberExpression") {
-      // 'ss'[a=1] -> 'ss'[1] 
+      // 'ss'[a=1] -> 'ss'[1]
       if (n.property.type === "AssignmentExpression") {
         if (n.property.right.type === 'Literal') {
           return n.object.value[n.property.right.value] + '';
@@ -770,7 +775,7 @@ var jstiller = (function() {
         } else if (n.object.type === "Literal") {
           if (n.object.value[n.property.name]) {
             return n.object.value[n.property.name].toString()
-          } else { // returns undefined as string 
+          } else { // returns undefined as string
             return "undefined";
           }
         } else if (n.object.type === "Identifier" && global_vars.indexOf(n.object.name) !== -1) {
@@ -791,7 +796,7 @@ var jstiller = (function() {
   }
 
   function getValue(e) {
-    return typeof e.value !== "undefined" ? e.value : e.regex ? new RegExp(e.regex.pattern,e.regex.flags) : (e.retVal ? e.retVal.value : null);
+    return typeof e.value !== "undefined" ? e.value : e.regex ? new RegExp(e.regex.pattern, e.regex.flags) : (e.retVal ? e.retVal.value : null);
   }
 
   //var incall=false  Added for knowing when we are in a calling state or declarative.
@@ -801,9 +806,10 @@ var jstiller = (function() {
     "type": "Identifier",
     "name": "window"
   };
+
   function init() {
     gscope = {};
-   // global_vars.forEach(function (el){ gscope[el] = {value:{type: 'Identifier', name:el, native_type: this[el]?typeof this[el]:"object"} }});
+    // global_vars.forEach(function (el){ gscope[el] = {value:{type: 'Identifier', name:el, native_type: this[el]?typeof this[el]:"object"} }});
     gscope.externalRefs = [];
     scope_set_this(gscope, global_this)
     // gscope[EXP_MAYBE_EXP_THIS_OBJ] = gscope[EXP_THIS_OBJ] = global_this;
@@ -814,11 +820,13 @@ var jstiller = (function() {
     debug("scope_set_maybe_this");
     scope[EXP_MAYBE_EXP_THIS_OBJ] = v;
   }
+
   function scope_set_this(scope, v) {
     scope[EXP_THIS_OBJ] = {
       value: v.value || v
     };
   }
+
   function set_scope(scope, key, obj) {
     scope[key] = obj;
   }
@@ -837,8 +845,23 @@ var jstiller = (function() {
 
 
     //ast.__parent__=parent;
-    var ast_reduce_scoped = function(e) {
+    var ast_reduce_scoped = function (e) {
       return ast_reduce(e, scope, expandvars, ast);
+    };
+    // map 函数改进，如果map的循环function中retrun 一个数组，那么把这个数组拆分
+    var arrMapRetArr = function (targets) {
+      var results = targets.map(ast_reduce_scoped);
+      var rets = [];
+      results.forEach(result => {
+        if (result instanceof Array) {
+          result.forEach(item => {
+            rets.push(item);
+          });
+        } else {
+          rets.push(result);
+        }
+      });
+      return rets;
     };
     // if(ast.called && ast.called_with_args){
     //   debugger;
@@ -889,7 +912,7 @@ var jstiller = (function() {
             if (right.retVal)
               right = right.retVal;
           }
-          // 
+          //
           // Concatenation of different types that results in Strings
           // BEWARE: the toString is considered not overrided
           // XXXXXXXXXXXXXXXXX
@@ -897,7 +920,7 @@ var jstiller = (function() {
           // Also functions need 2 b rewritten (toString)
           var typeOps = ["ObjectExpression", "ArrayExpression", "Literal", "Identifier", "MemberExpression"]
           if (ast.operator === '+' /*&& typeOps.indexOf(left.type)!==-1 &&
-                  typeOps.indexOf(right.type)!==-1*/ ) { // []|{}|String|undefined
+                  typeOps.indexOf(right.type)!==-1*/) { // []|{}|String|undefined
             try {
               //  if((right.type==="Identifier" && (right.name!=="undefined" || right.name!=="null") ) &&
               //    (left.type==="Identifier" && (left.name!=="undefined" || left.name!="null") ) )
@@ -940,15 +963,15 @@ var jstiller = (function() {
                       rightV = toString(rightV.resolved.value)
                     }
                   }
-                // rightV=toString(rightV.resolved.value)
-                } else { //Not found, lets expand it to undefined 
+                  // rightV=toString(rightV.resolved.value)
+                } else { //Not found, lets expand it to undefined
 
                   if (right.property.name === "constructor" || (!scope.closed && scope !== gscope))
-                    // if we're in a !expandVars situation we should'n expand undefined values
+                  // if we're in a !expandVars situation we should'n expand undefined values
                     rightV = toString(undefOrObj);
-                  else if(!getObjectPath(undefOrObj)){ 
-                  // if cannot get Object path means that it's probably not stringable
-                  // like aa().test+'bb'
+                  else if (!getObjectPath(undefOrObj)) {
+                    // if cannot get Object path means that it's probably not stringable
+                    // like aa().test+'bb'
                     rightV = toString(undefOrObj);
                   } else {
                     rightV = toString(undefObj);
@@ -961,13 +984,13 @@ var jstiller = (function() {
                 rightV = toString(right);
               else
                 rightV = "[object Object]";
-              ////////////////////////////////////////////////////////////// 
+              //////////////////////////////////////////////////////////////
               undefOrObj = left; //left undefObj
               if (left.type === "Identifier") {
                 if (left.name in scope) {
                   leftV = findScope(left.name, scope).value;
                   left = leftV.value;
-                } else if (global_vars.indexOf(left.name) === -1) { //Not found, lets expand it to undefined 
+                } else if (global_vars.indexOf(left.name) === -1) { //Not found, lets expand it to undefined
                   leftV = {
                     value: undefOrObj
                   };
@@ -991,9 +1014,9 @@ var jstiller = (function() {
                 } else {
                   if (left.property.name === "constructor" || (!scope.closed && scope !== gscope))
                     leftV = toString(undefOrObj);
-                  else if(!getObjectPath(undefOrObj)){ 
-                  // if cannot get Object path means that it's probably not stringable
-                  // like aa().test+'bb'
+                  else if (!getObjectPath(undefOrObj)) {
+                    // if cannot get Object path means that it's probably not stringable
+                    // like aa().test+'bb'
                     leftV = toString(undefOrObj);
                   } else {
                     leftV = toString(undefObj);
@@ -1042,28 +1065,29 @@ var jstiller = (function() {
             value = findScope(arg.name, scope);
             if (value && value.value && value.value.value)
               arg = value.value.value;
-            else if(arg.native_type || global_vars.indexOf(arg.name) !== -1)
-              arg.native_type = this[arg.name]?typeof this[arg.name] :"object";
+            else if (arg.native_type || global_vars.indexOf(arg.name) !== -1)
+              arg.native_type = this[arg.name] ? typeof this[arg.name] : "object";
           }
-          var typeOps = ["ObjectExpression", "ArrayExpression", "Literal","FunctionExpression"];
-          var typeOfOps = ["object","function"];
-          
+          var typeOps = ["ObjectExpression", "ArrayExpression", "Literal", "FunctionExpression"];
+          var typeOfOps = ["object", "function"];
+
           if (typeOps.indexOf(arg.type) !== -1 || typeOfOps.indexOf(arg.native_type) !== -1) { // []|{}|String
             //var _tarV=ret.callee.object.elements.map(function(a){return genCode(a,{format:{json:true}})})
             if (arg.type === "ArrayExpression") {
               try {
                 value = JSON.parse(genCode(arg));
               } catch (exc) {
-                value = arg.elements.map(function(a) {
+                value = arg.elements.map(function (a) {
                   if (a.value) return a.value;
                   return "XX"
                 })
               }
             } else if (arg.type === "ObjectExpression" || arg.native_type === 'object')
               value = {};
-            else if (arg.type === "FunctionExpression" || arg.native_type === 'function'){
-              value = function (){};
-            } else{
+            else if (arg.type === "FunctionExpression" || arg.native_type === 'function') {
+              value = function () {
+              };
+            } else {
               value = undefined; //we can force to undefined as the "pure" operation are already taken above
             }
 
@@ -1098,12 +1122,12 @@ var jstiller = (function() {
       case 'Program':
         ret = {
           type: ast.type,
-          body: ast.body.map(ast_reduce_scoped)
+          body: arrMapRetArr(ast.body)
         };
         return ret;
 
       case 'ExpressionStatement':
-        if(ast.expression.type === 'ConditionalExpression'){
+        if (ast.expression.type === 'ConditionalExpression') {
           ast.expression.canbetransformed = true;
         }
         ret = {
@@ -1113,7 +1137,7 @@ var jstiller = (function() {
         ret.pure = ret.expression.pure;
         if (ret.expression.expanded) //if expanded property is set to true when we expand Function or eval
           return ast_reduce_scoped(ret.expression)
-        
+
         /// Transforms SequenceExpression a,b,c to BlockStatement a;b;c; but only if it is standalone (Ie not in another expression)
         /*
         c=3;
@@ -1124,12 +1148,14 @@ var jstiller = (function() {
         v = 4;
         h = 4;
         */
-        if(ret.expression.type === 'SequenceExpression' && (parent.type === 'BlockStatement' || parent.type === 'Program')){
-          _tmp = ret.expression.expressions.map(el => {return {type:'ExpressionStatement',expression: el}})
+        if (ret.expression.type === 'SequenceExpression' && (parent.type === 'BlockStatement' || parent.type === 'Program')) {
+          _tmp = ret.expression.expressions.map(el => {
+            return {type: 'ExpressionStatement', expression: el}
+          })
           ret = {
             type: 'Program', // This is a hack because we need to return a ast node, and we actually have n nodes in a block.
-                            // so instead of using BlockStatement, which would be rewritten as {.expressions..}, we use Program 
-                            // expressions are not surrounded by brackets.
+            // so instead of using BlockStatement, which would be rewritten as {.expressions..}, we use Program
+            // expressions are not surrounded by brackets.
             body: _tmp
           };
           parent.body[parent.body.indexOf(ast.expression)] = ret;
@@ -1141,13 +1167,13 @@ var jstiller = (function() {
 
       case 'ArrayPattern': //ADDED
         if (ast.elements.length) {
-          ast.elements = ast.elements.map(function(el) {
+          ast.elements = ast.elements.map(function (el) {
             el = ast_reduce(el, scope, false, ast)
             return el;
           });
         }
         return ast;
-        //case 'AssignmentPattern':console.log(33333)
+      //case 'AssignmentPattern':console.log(33333)
 
       case 'AssignmentExpression':
         ret = {
@@ -1167,8 +1193,8 @@ var jstiller = (function() {
 
           } else if (ret.left.type === 'Identifier') {
             _tmp = findScope(ret.left.name, scope);
-            if (((_tmp && _tmp.scope !== scope) /*|| !_tmp not found*/ ) && scope.externalRefs.indexOf(ret.left) !== -1){
-              scope.externalWrite = true;              
+            if (((_tmp && _tmp.scope !== scope) /*|| !_tmp not found*/) && scope.externalRefs.indexOf(ret.left) !== -1) {
+              scope.externalWrite = true;
             }
           }
         }
@@ -1184,12 +1210,12 @@ var jstiller = (function() {
           ret.operator = "=";
         }
         /*
-          AssignmentExpression: g=0 
+          AssignmentExpression: g=0
           VariableDeclarator: init:{} <. var t=0
           when we have VariableDeclarator we already know the scope.
           with Assigment we need to get the scope.
          */
-        // shortcut to resolve of the identifier 
+        // shortcut to resolve of the identifier
         if (ret.right.type === "Identifier"
           && ret.right.retVal
           && ret.right.retVal.isLocal) {
@@ -1217,7 +1243,7 @@ var jstiller = (function() {
 
         if (ret.left.type === "ArrayPattern") {
           if (_trv.type === 'Literal' || _trv.type === 'ArrayExpression') {
-            ret.left.elements.forEach(function(el, id) {
+            ret.left.elements.forEach(function (el, id) {
               if (el != null) {
                 var _el = el.type === 'AssignmentPattern' ? el.left : el;
                 var value = _trv.type === 'ArrayExpression' ? _trv.elements[id] : mkliteral(_trv.value[id]);
@@ -1231,7 +1257,7 @@ var jstiller = (function() {
             });
           }
         }
-        // Scope Finding 
+        // Scope Finding
         valFromScope = false;
         //if left is Ident and is found in any scope update it with the new rval
         if (ret.left.type === "Identifier") {
@@ -1384,18 +1410,18 @@ var jstiller = (function() {
         var realCallee = ast.callee
         if (ast.callee.type === 'SequenceExpression') {
           // is a comma separated sequence, we need to reduce everything
-          // but last one then reduce the arguments, then 
+          // but last one then reduce the arguments, then
           // the supposed function that will be called
           _tmp = {
             type: 'SequenceExpression',
-            expressions: ast.callee.expressions.map(ast_reduce_scoped)
+            expressions: arrMapRetArr(ast.callee.expressions)
           }
           //ret.callee = ast.callee.expressions.slice(-1);
           var realCallee = _tmp.expressions.slice(-1)[0];
         }
 
         realCallee.called = true;
-        var c_arguments = ast.arguments.map(ast_reduce_scoped);
+        var c_arguments = arrMapRetArr(ast.arguments);
         realCallee.called_with_args = c_arguments;
         ret.arguments = c_arguments;
         /*ret = {
@@ -1411,8 +1437,8 @@ var jstiller = (function() {
           ret.callee = _tmp;
         }
 
-        ret.purearg = ret.arguments.every(function(e) {
-          //solve 
+        ret.purearg = ret.arguments.every(function (e) {
+          //solve
 
           if (e.type === 'Identifier' && e.name in scope) {
             valScope = findScope(e.name, scope);
@@ -1424,7 +1450,7 @@ var jstiller = (function() {
 
         if (realCallee.type === 'FunctionExpression' && realCallee.body) {
 
-          realCallee.params.map(function(p, i) {
+          realCallee.params.map(function (p, i) {
 
             realCallee.body.scope[p.name] = {
               value: c_arguments[i] || undefined,
@@ -1503,16 +1529,16 @@ var jstiller = (function() {
           }
         }
         if (match(realCallee, {
-            type: 'Identifier',
-            name: 'Function'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'Function'
+        }) && ret.purearg) {
 
           value = ret.arguments;
           debug("Function", value);
           var _tast,
             _params = [],
             _fbody,
-            _functionast /*,_preamble='function anonymous('*/ ;
+            _functionast /*,_preamble='function anonymous('*/;
           /*if(value.length===0)
              return ret;
            _fbody=value.pop().value;*/
@@ -1521,14 +1547,14 @@ var jstiller = (function() {
             return ret;
           _fbody = _fbody.value;
           if (value.length > 0) {
-            _params = value.map(function(a) {
+            _params = value.map(function (a) {
               /*_preamble+=a.value+',' ;*/
               return {
                 type: "Identifier",
                 name: a.value
               }
             })
-          //_preamble=_preamble.slice(0,-1) ;
+            //_preamble=_preamble.slice(0,-1) ;
           }
           // _preamble='('+_preamble+'){'+ _fbody+'})';
           //s_tast=parseAst(_preamble);
@@ -1564,9 +1590,9 @@ var jstiller = (function() {
         // eval
         // Experimental eval to AST!!!
         if (match(realCallee, {
-            type: 'Identifier',
-            name: 'eval'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'eval'
+        }) && ret.purearg) {
           value = ret.arguments[ret.arguments.length - 1];
           if (value.length === 0) {
             return ret;
@@ -1587,7 +1613,7 @@ var jstiller = (function() {
                   body: _functionast.body
                 },
                 "expanded": true
-            }
+              }
           } catch (exc) {
             debug("Eval : ", exc)
           }
@@ -1595,36 +1621,36 @@ var jstiller = (function() {
 
         // RegExp(X) > /X/i
         if (match(realCallee, {
-            type: 'Identifier',
-            name: 'RegExp'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'RegExp'
+        }) && ret.purearg) {
           value = RegExp.apply(null,
             ret.arguments.map(getValue));
           return mkliteral(value);
         }
         // String(literal)
         if (match(realCallee, {
-            type: 'Identifier',
-            name: 'String'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'String'
+        }) && ret.purearg) {
           value = String.apply(null,
             ret.arguments.map(getValue));
           return mkliteral(value);
         }
         if (match(realCallee, {
-            type: 'Identifier',
-            name: 'Boolean'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'Boolean'
+        }) && ret.purearg) {
           value = Boolean.apply(null,
             ret.arguments.map(getValue));
           return mkliteral(value);
         }
 
-        //atob(literal) 
+        //atob(literal)
         if (match(realCallee, {
-            type: 'Identifier',
-            name: 'atob'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'atob'
+        }) && ret.purearg) {
           value = b64.atob.apply(null,
             ret.arguments.map(getValue));
           return mkliteral(value);
@@ -1632,23 +1658,24 @@ var jstiller = (function() {
 
         //btoa(literal)
         if (match(realCallee, {
-            type: 'Identifier',
-            name: 'btoa'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'btoa'
+        }) && ret.purearg) {
           value = b64.btoa.apply(null,
             ret.arguments.map(getValue));
           return mkliteral(value);
         }
 
         if (match(realCallee, {
-            type: 'Identifier',
-            name: "Date"
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: "Date"
+        }) && ret.purearg) {
           try {
             value = global["Date"].apply(null,
               ret.arguments.map(getValue));
             return mkliteral(value);
-          } catch (e) {}
+          } catch (e) {
+          }
         }
 
         var methods1 = ["escape", "unescape", "encodeURIComponent",
@@ -1659,33 +1686,35 @@ var jstiller = (function() {
           if (ret.arguments.length) {
             try {
               _tmp = toString(ret.arguments[0]);
-            } catch (e) {}
+            } catch (e) {
+            }
           }
           if (match(realCallee, {
-              type: 'Identifier',
-              name: realCallee.name
-            }) && _tmp) {
+            type: 'Identifier',
+            name: realCallee.name
+          }) && _tmp) {
             try {
               value = global[realCallee.name].call(null, _tmp);
               return mkliteral(value);
-            } catch (e) {}
+            } catch (e) {
+            }
           }
         }
 
         // Array methods
         if (match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'ArrayExpression'
-            },
-            property: {
-              type: 'Identifier',
-              name: "concat"
-            }
-          })) {
+          type: 'MemberExpression',
+          object: {
+            type: 'ArrayExpression'
+          },
+          property: {
+            type: 'Identifier',
+            name: "concat"
+          }
+        })) {
           //s_tmp = ret.arguments.map(getValue)
           _tmp = [];
-          ret.arguments.forEach(function(el) {
+          ret.arguments.forEach(function (el) {
             if (el.type === 'ArrayExpression') {
               _tmp = _tmp.concat(el.elements);
               return;
@@ -1700,15 +1729,15 @@ var jstiller = (function() {
         }
 
         if (match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'ArrayExpression'
-            },
-            property: {
-              type: 'Identifier',
-              name: "reverse"
-            }
-          })) {
+          type: 'MemberExpression',
+          object: {
+            type: 'ArrayExpression'
+          },
+          property: {
+            type: 'Identifier',
+            name: "reverse"
+          }
+        })) {
           return {
             "type": "ArrayExpression",
             "elements": realCallee.object.elements.reverse()
@@ -1716,26 +1745,26 @@ var jstiller = (function() {
         }
         // String literal methods
         // removed "match","split",
-        var methods1 = ["anchor","big","blink","bold","charAt","charCodeAt","codePointAt",
-        "concat","contains","endsWith","fixed","fontcolor","fontsize","includes","indexOf",
-        "italics","lastIndexOf","link","localeCompare","normalize","padEnd",
-        "padStart","quote","repeat","replace","search","slice","small","startsWith",
-        "strike","sub","substr","substring","sup","toLocaleLowerCase","toLocaleUpperCase",
-        "toLowerCase","toUpperCase","trim","trimLeft","trimRight","toString"];
+        var methods1 = ["anchor", "big", "blink", "bold", "charAt", "charCodeAt", "codePointAt",
+          "concat", "contains", "endsWith", "fixed", "fontcolor", "fontsize", "includes", "indexOf",
+          "italics", "lastIndexOf", "link", "localeCompare", "normalize", "padEnd",
+          "padStart", "quote", "repeat", "replace", "search", "slice", "small", "startsWith",
+          "strike", "sub", "substr", "substring", "sup", "toLocaleLowerCase", "toLocaleUpperCase",
+          "toLowerCase", "toUpperCase", "trim", "trimLeft", "trimRight", "toString"];
 
         if (realCallee && realCallee.property && methods1.indexOf(realCallee.property.name) !== -1) {
           var strMet = realCallee.property.name;
 
           if (match(realCallee, {
-              type: 'MemberExpression',
-              object: {
-                type: 'Literal'
-              },
-              property: {
-                type: 'Identifier',
-                name: strMet
-              }
-            }) && ret.purearg) {
+            type: 'MemberExpression',
+            object: {
+              type: 'Literal'
+            },
+            property: {
+              type: 'Identifier',
+              name: strMet
+            }
+          }) && ret.purearg) {
 
             value = realCallee.object.value[strMet].apply(realCallee.object.value,
               ret.arguments.map(getValue));
@@ -1745,15 +1774,15 @@ var jstiller = (function() {
         }
         // "XXX".replace()
         if (match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'Literal'
-            },
-            property: {
-              type: 'Identifier',
-              name: "replace"
-            }
-          }) && ret.arguments[0].type === "Literal" && ret.arguments[1].type === "Literal") {
+          type: 'MemberExpression',
+          object: {
+            type: 'Literal'
+          },
+          property: {
+            type: 'Identifier',
+            name: "replace"
+          }
+        }) && ret.arguments[0].type === "Literal" && ret.arguments[1].type === "Literal") {
 
           value = realCallee.object.value.replace.apply(realCallee.object.value,
             ret.arguments.map(getValue));
@@ -1762,15 +1791,15 @@ var jstiller = (function() {
 
         // "xxx".split(..)
         if (match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'Literal'
-            },
-            property: {
-              type: 'Identifier',
-              name: 'split'
-            }
-          }) && ret.purearg) {
+          type: 'MemberExpression',
+          object: {
+            type: 'Literal'
+          },
+          property: {
+            type: 'Identifier',
+            name: 'split'
+          }
+        }) && ret.purearg) {
           value = realCallee.object.value.split.apply(realCallee.object.value,
             ret.arguments.map(getValue));
 
@@ -1795,24 +1824,24 @@ var jstiller = (function() {
         }
         //Array join & toString
         if ((match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'ArrayExpression'
-            },
-            property: {
-              type: 'Identifier',
-              name: 'join'
-            }
-          }) || match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'ArrayExpression'
-            },
-            property: {
-              type: 'Identifier',
-              name: 'toString'
-            }
-          })) && ret.purearg && realCallee.object.stringable) {
+          type: 'MemberExpression',
+          object: {
+            type: 'ArrayExpression'
+          },
+          property: {
+            type: 'Identifier',
+            name: 'join'
+          }
+        }) || match(realCallee, {
+          type: 'MemberExpression',
+          object: {
+            type: 'ArrayExpression'
+          },
+          property: {
+            type: 'Identifier',
+            name: 'toString'
+          }
+        })) && ret.purearg && realCallee.object.stringable) {
 
           // debug((ret),toString(realCallee.object,"",","))
 
@@ -1826,51 +1855,51 @@ var jstiller = (function() {
 
         // String.fromCharCode()
         if ((match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'Identifier',
-              name: 'String'
-            },
-            property: {
-              type: 'Identifier',
-              name: 'fromCharCode'
-            }
-          }) || match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'Identifier',
-              name: 'String'
-            },
-            property: {
-              type: 'Literal',
-              value: 'fromCharCode'
-            }
-          })) && ret.purearg) {
+          type: 'MemberExpression',
+          object: {
+            type: 'Identifier',
+            name: 'String'
+          },
+          property: {
+            type: 'Identifier',
+            name: 'fromCharCode'
+          }
+        }) || match(realCallee, {
+          type: 'MemberExpression',
+          object: {
+            type: 'Identifier',
+            name: 'String'
+          },
+          property: {
+            type: 'Literal',
+            value: 'fromCharCode'
+          }
+        })) && ret.purearg) {
           value = String.fromCharCode.apply(String,
             ret.arguments.map(getValue));
           return mkliteral(value);
         }
         if ((match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'Identifier',
-              name: 'document'
-            },
-            property: {
-              type: 'Identifier',
-              name: 'write'
-            }
-          }) || match(realCallee, {
-            type: 'MemberExpression',
-            object: {
-              type: 'Identifier',
-              name: 'document'
-            },
-            property: {
-              type: 'Literal',
-              value: 'writeln'
-            }
-          })) && ret.purearg) {
+          type: 'MemberExpression',
+          object: {
+            type: 'Identifier',
+            name: 'document'
+          },
+          property: {
+            type: 'Identifier',
+            name: 'write'
+          }
+        }) || match(realCallee, {
+          type: 'MemberExpression',
+          object: {
+            type: 'Identifier',
+            name: 'document'
+          },
+          property: {
+            type: 'Literal',
+            value: 'writeln'
+          }
+        })) && ret.purearg) {
           value = ret.arguments.map(getValue);
           value = value.join("");
           value = collectHTMLData(value);
@@ -1915,13 +1944,13 @@ var jstiller = (function() {
           } else {
             calleeBody.retVal = mkliteral(calleeBody.value);
           }
-        } else if ( /*EXPERIMENTAL!*/ calleeBody && calleeBody.body && calleeBody.body.length === 1 && calleeBody.body[0].argument && calleeBody.scope.hasOwnProperty("returns")
+        } else if (/*EXPERIMENTAL!*/ calleeBody && calleeBody.body && calleeBody.body.length === 1 && calleeBody.body[0].argument && calleeBody.scope.hasOwnProperty("returns")
           && calleeBody.scope.returns === 1) {
           //TODO   We need to copy the function scope and add params values!! tmp_scope = Object.create(calleBody.scope)
           //       Copy all values.
           var _callee = realCallee.params ? realCallee : (realCallee.resolve_to.params ? realCallee.resolve_to : null);
           var tmp_scope = Object.create(calleeBody.scope);
-          _callee.params.map(function(p, i) {
+          _callee.params.map(function (p, i) {
 
             tmp_scope[p.name] = {
               value: c_arguments[i] || undefined,
@@ -2040,7 +2069,8 @@ var jstiller = (function() {
                 else if (typeof vm_returned === 'function') {
                   _tast = parseAst(vm_returned.toString()).body[0];
                   _tast.type = "FunctionExpression";
-                  return ast_reduce(_tast, scope, expandvars, ast);;
+                  return ast_reduce(_tast, scope, expandvars, ast);
+                  ;
                 } else {
                   return parseAst(JSON.stringify(vm_returned));
                 }
@@ -2096,7 +2126,8 @@ var jstiller = (function() {
               else if (typeof vm_returned === 'function') {
                 _tast = parseAst(vm_returned.toString()).body[0];
                 _tast.type = "FunctionExpression";
-                return ast_reduce(_tast, scope, expandvars, ast);;
+                return ast_reduce(_tast, scope, expandvars, ast);
+                ;
               } else {
                 return parseAst(JSON.stringify(vm_returned));
               }
@@ -2180,7 +2211,8 @@ var jstiller = (function() {
               } else if (typeof vm_returned === 'function') {
                 _tast = parseAst(vm_returned.toString()).body[0];
                 _tast.type = "FunctionExpression";
-                return ast_reduce(_tast, scope, expandvars, ast);;
+                return ast_reduce(_tast, scope, expandvars, ast);
+                ;
               } else {
                 return parseAst(JSON.stringify(vm_returned));
               }
@@ -2232,7 +2264,7 @@ var jstiller = (function() {
             valFromScope.pure = valFromScope.value.pure;
         } else if (global_vars.indexOf(ast.name) !== -1 && scope.closed !== false) {
           scope.closed = true;
-        } else { // Problem, this Ident is called for a.b.c as well as for a 
+        } else { // Problem, this Ident is called for a.b.c as well as for a
 
           if ((parent.type !== 'MemberExpression' || ast.firstObj) && scope != gscope) {
 
@@ -2241,7 +2273,7 @@ var jstiller = (function() {
             // Not Found!! Still we want to add externalRefs.
             if (scope.externalRefs.indexOf(ast) === -1)
               scope.externalRefs.push(ast); // We have s.g.e -> ast.name === 'e' getRealVal to see if is external or in scope);
-          //scope.externalRefs.push(// We have s.g.e -> ast.name === 'e' getRealVal to see if is external or in scope);
+            //scope.externalRefs.push(// We have s.g.e -> ast.name === 'e' getRealVal to see if is external or in scope);
           }
         }
 
@@ -2279,7 +2311,7 @@ var jstiller = (function() {
         ret = {
           type: ast.type,
           computed: true,
-          elements: ast.elements.map(ast_reduce_scoped)
+          elements: arrMapRetArr(ast.elements)
         };
         // can [...].toString Array be always reduced? in which sceneries?
         // trying to find a way to figure it out.
@@ -2291,22 +2323,23 @@ var jstiller = (function() {
         ret[CURRENT_OBJ] = objCopy(ret);
         var stringabletypes = ["ObjectExpression", "Literal", "FunctionExpression"];
 
-        ret.stringable = ret.elements.every(function(a) {
+        ret.stringable = ret.elements.every(function (a) {
           return stringabletypes.indexOf(a.type) !== -1 || a.pure || a.pured || a.purable || a.pure_global || a.stringable
         })
-        ret.simpleType = ret.elements.every(function(a) {
-          debug("SIMPLETYPE: ", a); return a.type === "Literal"
+        ret.simpleType = ret.elements.every(function (a) {
+          debug("SIMPLETYPE: ", a);
+          return a.type === "Literal"
         });
-/*        ret.elements.forEach((el,index )=> {el.leadingComments=[{
-          type: "block",
-          value: "["+index+"]"
-        }]});*/
+        /*        ret.elements.forEach((el,index )=> {el.leadingComments=[{
+                  type: "block",
+                  value: "["+index+"]"
+                }]});*/
         return ret;
 
       case 'ObjectExpression':
         ret = {};
         ret.type = 'ObjectExpression';
-        ret.properties = ast.properties.map(function(pr) {
+        ret.properties = ast.properties.map(function (pr) {
 
           /*if(pr.value.type==='FunctionExpression')
             scope_set_maybe_this(pr.value, ret ); */
@@ -2325,7 +2358,7 @@ var jstiller = (function() {
         });
 
         //ObjectExpression: this add parent node to properties
-        //We'll use it when: 
+        //We'll use it when:
         //ob.prop=x to adjust to its value in scope.
         for (var i = 0, l = ret.properties.length; i < l; i++)
           ret.properties[i].parent = ret;
@@ -2346,7 +2379,7 @@ var jstiller = (function() {
           object: ast_reduce_scoped(ast.object),
           // do not expand identifiers as variables if they are not in square brackets
           property: ast.computed ?
-            //Error, if computed is true, should expand to be true ?! 
+            //Error, if computed is true, should expand to be true ?!
             ast_reduce(ast.property, scope, true, ast)
             : ast_reduce(ast.property, scope, false, ast)
         }
@@ -2404,16 +2437,16 @@ var jstiller = (function() {
           ret.property.parent = ret;
         }
 
-        // ['fds','gfd'][..] direct access to array elements 
+        // ['fds','gfd'][..] direct access to array elements
         if (match(ret, {
-            object: {
-              type: 'ArrayExpression'
-            },
-            property: {
-              type: 'Literal',
-              pure: true
-            }
-          })) {
+          object: {
+            type: 'ArrayExpression'
+          },
+          property: {
+            type: 'Literal',
+            pure: true
+          }
+        })) {
           debug("ArrayExpression a[1]", ret.object.elements, ret.property.value, ret.object.elements[ret.property.value]);
 
           value = ret.object.elements[ret.property.value];
@@ -2425,14 +2458,14 @@ var jstiller = (function() {
         }
 
         if (match(ret, {
-            object: {
-              type: 'ArrayExpression'
-            },
-            property: {
-              type: 'ArrayExpression',
-              computed: true
-            }
-          })) {
+          object: {
+            type: 'ArrayExpression'
+          },
+          property: {
+            type: 'ArrayExpression',
+            computed: true
+          }
+        })) {
 
           value = ret.object.elements[toString(ret.property)]
           debug(toString(ret.property), value);
@@ -2445,36 +2478,36 @@ var jstiller = (function() {
         }
 
         if (match(ret, {
-            object: {
-              type: 'Literal',
-              pure: true
-            },
-            property: {
-              type: 'Literal',
-              pure: true
-            }
-          })) {
+          object: {
+            type: 'Literal',
+            pure: true
+          },
+          property: {
+            type: 'Literal',
+            pure: true
+          }
+        })) {
           value = mkliteral(ret.object.value[ret.property.value]);
           ret.object = _tretObj;
           return value;
         }
 
         if (match(ret, {
-            object: {
-              type: 'Literal'
-            },
-            property: {
-              name: 'length'
-            }
-          }) || match(ret, {
-            object: {
-              type: 'Literal'
-            },
-            property: {
-              type: 'Literal',
-              value: 'length'
-            }
-          })) {
+          object: {
+            type: 'Literal'
+          },
+          property: {
+            name: 'length'
+          }
+        }) || match(ret, {
+          object: {
+            type: 'Literal'
+          },
+          property: {
+            type: 'Literal',
+            value: 'length'
+          }
+        })) {
           value = {
             type: 'Literal',
             pure: true,
@@ -2504,14 +2537,14 @@ var jstiller = (function() {
         }
         //constructor
         if (match(ret, {
-            object: {
-              type: 'Literal'
-            },
-            property: {
-              type: 'Identifier',
-              name: "constructor"
-            }
-          })) {
+          object: {
+            type: 'Literal'
+          },
+          property: {
+            type: 'Identifier',
+            name: "constructor"
+          }
+        })) {
           value = {
             type: 'Identifier',
             name: ret.object.value[ret.property.name].name
@@ -2521,14 +2554,14 @@ var jstiller = (function() {
           return mkliteral(ret.object.value[ret.property.name]);
         }
         if (match(ret, {
-            object: {
-              type: 'Identifier'
-            },
-            property: {
-              type: 'Identifier',
-              name: "constructor"
-            }
-          })) {
+          object: {
+            type: 'Identifier'
+          },
+          property: {
+            type: 'Identifier',
+            name: "constructor"
+          }
+        })) {
           if (global[ret.object.name]) {
             value = {
               type: 'Identifier',
@@ -2539,14 +2572,14 @@ var jstiller = (function() {
           }
         }
         if (match(ret, {
-            object: {
-              type: 'ArrayExpression'
-            },
-            property: {
-              type: 'Identifier',
-              name: "constructor"
-            }
-          })) {
+          object: {
+            type: 'ArrayExpression'
+          },
+          property: {
+            type: 'Identifier',
+            name: "constructor"
+          }
+        })) {
           ret.object = _tretObj;
           return {
             type: 'Identifier',
@@ -2555,14 +2588,14 @@ var jstiller = (function() {
           return mkliteral(ret.object.value[ret.property.name]);
         }
         if (match(ret, {
-            object: {
-              type: 'ObjectExpression'
-            },
-            property: {
-              type: 'Identifier',
-              name: "constructor"
-            }
-          })) {
+          object: {
+            type: 'ObjectExpression'
+          },
+          property: {
+            type: 'Identifier',
+            name: "constructor"
+          }
+        })) {
           ret.object = _tretObj;
           return {
             type: 'Identifier',
@@ -2571,14 +2604,14 @@ var jstiller = (function() {
           return mkliteral(ret.object.value[ret.property.name]);
         }
         if (match(ret, {
-            object: {
-              type: 'FunctionExpression'
-            },
-            property: {
-              type: 'Identifier',
-              name: "constructor"
-            }
-          })) {
+          object: {
+            type: 'FunctionExpression'
+          },
+          property: {
+            type: 'Identifier',
+            name: "constructor"
+          }
+        })) {
           ret.object = _tretObj;
           return {
             type: 'Identifier',
@@ -2591,15 +2624,19 @@ var jstiller = (function() {
 
 
       case 'VariableDeclaration':
-        ret = {
-          type: ast.type,
-          kind: ast.kind,
-          declarations: ast.declarations.map(ast_reduce_scoped)
-        };
-        ret.pure = ret.declarations.every(function(e) {
-          return !e.init || e.init.pure || e.init.pured || e.init.purable || e.init.pure_global;
+        var rets = [];
+        ast.declarations.forEach(declaration => {
+          ret = {
+            type: ast.type,
+            kind: ast.kind,
+            declarations: [ast_reduce_scoped(declaration)]
+          };
+          ret.pure = ret.declarations.every(function (e) {
+            return !e.init || e.init.pure || e.init.pured || e.init.purable || e.init.pure_global;
+          });
+          rets.push(ret);
         });
-        return ret;
+        return rets;
 
 
       case 'VariableDeclarator':
@@ -2659,7 +2696,7 @@ var jstiller = (function() {
           valFromScope = findScope(_obj.name, scope);
           var valScope = valFromScope.scope;
           var _sval = valFromScope = valFromScope.value;
-          var _lval = _tmp.property; // last one 
+          var _lval = _tmp.property; // last one
           if (!_sval) {
             set_scope(scope, ast.id.name, {
               value: _scopeVal,
@@ -2742,13 +2779,13 @@ var jstiller = (function() {
 
 
       case 'FunctionDeclaration':
-      //Eg function f(b){cc} 
+        //Eg function f(b){cc}
 
         fscope = Object.create(scope);
         fscope.externalRefs = [];
         fscope.closed = true;
 
-        ast.params.map(function(p) {
+        ast.params.map(function (p) {
           fscope[p.name] = {
             value: undefined,
             pure: false
@@ -2791,7 +2828,7 @@ var jstiller = (function() {
 
       case 'ArrowFunctionExpression':
       case 'FunctionExpression':
-      //Eg var t=function f(b){cc}  ; t=function f(b){cc} ; (function g(){})..
+        //Eg var t=function f(b){cc}  ; t=function f(b){cc} ; (function g(){})..
 
         fscope = Object.create(scope);
         fscope.externalRefs = [];
@@ -2802,7 +2839,7 @@ var jstiller = (function() {
         if (parent.type === "ObjectExpression")
           scope_set_this(fscope, parent);
         var _replarg = ast.called && ast.called_with_args
-        ast.params.map(function(p, i) {
+        ast.params.map(function (p, i) {
 
           fscope[p.name] = {
             value: _replarg ? ast.called_with_args[i] : undefined,
@@ -2853,10 +2890,10 @@ var jstiller = (function() {
       case 'BlockStatement':
         ret = {
           type: ast.type,
-          body: ast.body.map(ast_reduce_scoped)
+          body: arrMapRetArr(ast.body)
         };
         last = ret.body && ret.body.length > 0 && ret.body[ret.body.length - 1];
-        pure = ret.body && ret.body.every(function(e) {
+        pure = ret.body && ret.body.every(function (e) {
           return e.pure;
         });
         debug("BlockStatement :: ", pure, !!last, last.type === 'ReturnStatement', last.argument, last.argument && (last.argument.pure || (last.argument.type === 'Identifier' && global_vars.indexOf(last.argument.name) !== -1)))
@@ -2864,8 +2901,8 @@ var jstiller = (function() {
         if (pure && last && last.type === 'ReturnStatement' &&
           last.argument &&
           (last.argument.pure ||
-          (last.argument.type === 'Identifier' &&
-          global_vars.indexOf(last.argument.name) !== -1))) {
+            (last.argument.type === 'Identifier' &&
+              global_vars.indexOf(last.argument.name) !== -1))) {
           if (last.argument.pure) { //If return is "pure" return the literal
             return {
               type: ast.type,
@@ -2889,7 +2926,7 @@ var jstiller = (function() {
 
       case 'ReturnStatement':
         debug('ReturnStatement');
-        if(ast.argument==null){
+        if (ast.argument == null) {
           return ast;
         }
         value = ast_reduce(ast.argument, scope, true, ast);
@@ -2901,21 +2938,23 @@ var jstiller = (function() {
             type: 'BlockStatement',
             body: []
           };
-          value.expressions.forEach(function(el, id) {
-            if (id === value.expressions.length-1){
+          value.expressions.forEach(function (el, id) {
+            if (id === value.expressions.length - 1) {
               ret.body.push(
                 {
                   type: 'ReturnStatement',
                   argument: el,
                   pure: el && (el.pure || el.pured || el.purable || (el.type === "Identifier" && global_vars.indexOf(el.name) !== -1))
-              });
+                });
             } else
-              ret.body.push({"type": "ExpressionStatement",
-            "expression": el});
+              ret.body.push({
+                "type": "ExpressionStatement",
+                "expression": el
+              });
           });
-        } else if(value.type === 'ConditionalExpression'){ 
+        } else if (value.type === 'ConditionalExpression') {
           /*
-          rewrites 
+          rewrites
           function e(){return a?r:g;}
           to
           function e()
@@ -2972,7 +3011,7 @@ var jstiller = (function() {
         ret = {
           type: ast.type,
           test: ast_reduce(ast.test, scope, false, ast), // Expand or Not?Lookahead?
-          /*Error.. should be considered if Not dependent by the cycle or not? 
+          /*Error.. should be considered if Not dependent by the cycle or not?
            body: ast_reduce_scoped(ast.body) */
           body: ast_reduce(ast.body, scope, false, ast) //????
         };
@@ -3017,7 +3056,7 @@ var jstiller = (function() {
       case 'ThisExpression':
         debug("This Exp!", ast, scope);
         scope['.uses_this'] = true;
-        //is in Function? isGlobal? is Binded? 
+        //is in Function? isGlobal? is Binded?
         /**
          * Returns the "this Object".
          * @param  {[type]} scope [description]
@@ -3040,10 +3079,10 @@ var jstiller = (function() {
         };
 
         // if this ternary operator is standalone, we might want to expand it as a if then else
-        if ((parent.type === 'ExpressionStatement' && ast === parent.expression )
-          // OR is the child of another ConditionalExpression 
-            || (parent.type === 'ConditionalExpression' && ast !== parent.test && ret.canbetransformed)
-          ) {
+        if ((parent.type === 'ExpressionStatement' && ast === parent.expression)
+          // OR is the child of another ConditionalExpression
+          || (parent.type === 'ConditionalExpression' && ast !== parent.test && ret.canbetransformed)
+        ) {
           ret.type = 'IfStatement';
         } else {
           ret.type = ast.type;
@@ -3062,16 +3101,16 @@ var jstiller = (function() {
         ret = {
           type: ast.type,
           callee: ast_reduce_scoped(ast.callee),
-          arguments: ast.arguments.map(ast_reduce_scoped)
+          arguments: arrMapRetArr(ast.arguments)
         };
-        ret.purearg = ret.arguments.every(function(e) {
+        ret.purearg = ret.arguments.every(function (e) {
           return e.pure || e.simpleType;
         });
 
         if (match(ret.callee, {
-            type: "Identifier",
-            name: "Function"
-          }) && ret.purearg) {
+          type: "Identifier",
+          name: "Function"
+        }) && ret.purearg) {
           ret = ast_reduce({
             type: "ExpressionStatement",
             expression: {
@@ -3084,9 +3123,9 @@ var jstiller = (function() {
 
         }
         if (match(ret.callee, {
-            type: "Identifier",
-            name: "Array"
-          }) && ret.purearg) {
+          type: "Identifier",
+          name: "Array"
+        }) && ret.purearg) {
           ret = {
             "type": "ExpressionStatement",
             "expression": {
@@ -3097,26 +3136,26 @@ var jstiller = (function() {
 
         }
         if (match(ret.callee, {
-            type: 'Identifier',
-            name: 'Boolean'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'Boolean'
+        }) && ret.purearg) {
           value = Boolean.apply(null,
             ret.arguments.map(getValue));
           return mkliteral(value);
         }
         // RegExp(X) > /X/i
         if (match(ret.callee, {
-            type: 'Identifier',
-            name: 'RegExp'
-          }) && ret.purearg) {
+          type: 'Identifier',
+          name: 'RegExp'
+        }) && ret.purearg) {
           value = RegExp.apply(null,
             ret.arguments.map(getValue));
           return mkliteral(value);
         }
         if (match(ret.callee, {
-            type: "Identifier",
-            name: "Date"
-          }) && ret.purearg && ret.arguments.length === 0) {
+          type: "Identifier",
+          name: "Date"
+        }) && ret.purearg && ret.arguments.length === 0) {
           ret.retVal2 = new Date();
         }
         return ret;
@@ -3124,10 +3163,10 @@ var jstiller = (function() {
       case 'SequenceExpression':
         ret = {
           type: ast.type,
-          expressions: ast.expressions.map(ast_reduce_scoped)
+          expressions: arrMapRetArr(ast.expressions)
         };
 
-        if(parent.type === 'BlockStatement'){
+        if (parent.type === 'BlockStatement') {
           console.log(parent);
         }
         return ret;
@@ -3169,8 +3208,8 @@ var jstiller = (function() {
         return {
           type: ast.type,
           block: ast_reduce_scoped(ast.block),
-          guardedHandlers: ast.guardedHandlers ? ast.guardedHandlers.map(ast_reduce_scoped) : undefined,
-          handlers: ast.handlers ? ast.handlers.map(ast_reduce_scoped) : undefined,
+          guardedHandlers: ast.guardedHandlers ? arrMapRetArr(ast.guardedHandlers) : undefined,
+          handlers: ast.handlers ? arrMapRetArr(ast.handlers) : undefined,
           finalizer: ast_reduce_scoped(ast.finalizer),
         };
 
@@ -3201,29 +3240,29 @@ var jstiller = (function() {
         return ast;
 
       case 'TaggedTemplateExpression':
-         ret = {
+        ret = {
           type: "TaggedTemplateExpression",
           tag: ast_reduce_scoped(ast.tag),
           quasi: ast_reduce_scoped(ast.quasi)
-         }
-         _tmp = ast_reduce_scoped({
-              type: "CallExpression",
-              callee: ret.tag,
-              arguments: [ret.quasi]
-            });
-        if(_tmp.type === 'CallExpression')
+        }
+        _tmp = ast_reduce_scoped({
+          type: "CallExpression",
+          callee: ret.tag,
+          arguments: [ret.quasi]
+        });
+        if (_tmp.type === 'CallExpression')
           return ret;
         else
           return _tmp;
-       break;
- 
+        break;
+
       case 'TemplateLiteral':
-        // It's the argument of a taggedTemplateExpression 
+        // It's the argument of a taggedTemplateExpression
         if (parent.quasi && parent.quasi === ast) {
           // We need to keep the Template Literal
           // to keep the original behavior of the taggedTemplateExpression
-          // but we reduce all the 
-          ast.quasis.forEach(function(el, id) {
+          // but we reduce all the
+          ast.quasis.forEach(function (el, id) {
             if (el.value.cooked) {
               el.value.raw = el.value.cooked;
             }
@@ -3238,7 +3277,7 @@ var jstiller = (function() {
           //TODO: complete implementation for: https://github.com/babel/babel/pull/5791
           _tmp = [mkliteral("")];
           _trv = ast.expressions.slice(0);
-          ast.quasis.forEach(function(el, id) {
+          ast.quasis.forEach(function (el, id) {
             if (el.value.cooked) {
               _tmp.push(mkliteral(el.value.cooked));
             }
@@ -3270,7 +3309,7 @@ var jstiller = (function() {
         }
         break;
 
-        // TODO: 
+      // TODO:
 
       case 'AwaitExpression':
       case 'ClassBody':
@@ -3304,6 +3343,7 @@ var jstiller = (function() {
         return ast;
     }
   }
+
   return {
     deobfuscate: ast_reduce,
     init: init,
