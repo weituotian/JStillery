@@ -3081,7 +3081,7 @@ var jstiller = (function () {
         // if this ternary operator is standalone, we might want to expand it as a if then else
         if ((parent.type === 'ExpressionStatement' && ast === parent.expression)
           // OR is the child of another ConditionalExpression
-          || (parent.type === 'ConditionalExpression' && ast !== parent.test && ret.canbetransformed)
+          || (parent.type === 'ConditionalExpression' && ast !== parent.test) // ret.canbetransformed
         ) {
           ret.type = 'IfStatement';
         } else {

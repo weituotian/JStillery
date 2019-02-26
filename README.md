@@ -1,3 +1,10 @@
+## test
+```
+offsetPoint.x > 0 && 0 === offsetPoint.y ? a = 0 : 0 === offsetPoint.x && offsetPoint.y < 0 ? a = 270 : offsetPoint.x < 0 && 0 === offsetPoint.y ? a = 180 : offsetPoint.x < 0 && offsetPoint.y < 0 ? a = 180 + r : offsetPoint.x < 0 && offsetPoint.y > 0 ? a = 180 - r : offsetPoint.x > 0 && offsetPoint.y > 0 ? a = r : offsetPoint.x > 0 && offsetPoint.y < 0 && (a = 360 - r)
+a>b?c=1:e>f?g=2:h>i?j=4:k=5
+
+```
+
 # JStillery
 
 Advanced JS Deobfuscation via Partial Evaluation.
