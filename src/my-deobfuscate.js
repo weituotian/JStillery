@@ -3,7 +3,9 @@ var genCode = require("escodegen").generate;
 var reduceContext = {};
 
 function ast_reduce(ast, parent) {
-
+    if (!ast) {
+        return ast;
+    }
     let ret;
     parent = parent || {};
 
@@ -50,6 +52,34 @@ function ast_reduce(ast, parent) {
             };
             return ret;
 
+        case 'IfStatement': {
+
+            let tests = ast_reduce_scoped(ast.test);
+            let consequent1 = ast_reduce_scoped(ast.consequent);
+            let alternate1 = ast_reduce_scoped(ast.alternate);
+
+            if (tests instanceof Array) { // 如果if表达式里面有很多语句，分开
+
+                let last = tests.pop();
+                tests.push({
+                    type: 'IfStatement',
+                    test: last,
+                    consequent: consequent1,
+                    alternate: alternate1
+                });
+                return tests;
+
+            } else {
+                ret = {
+                    type: 'IfStatement',
+                    test: tests,
+                    consequent: consequent1,
+                    alternate: alternate1
+                };
+                return ret;
+            }
+
+        }
         case 'AssignmentExpression':
 
             if (ast.right.type === 'ConditionalExpression') {
@@ -73,23 +103,30 @@ function ast_reduce(ast, parent) {
 
             return ret;
 
-        case 'ReturnStatement':
+        case 'ReturnStatement': {
             if (ast.argument == null) {
                 return ast;
             }
 
-            const value = ast_reduce_scoped(ast.argument);
+            const returns = ast_reduce_scoped(ast.argument);
 
-            if (ast.argument.type === 'SequenceExpression') {
-                return value;
+            if (returns instanceof Array) {
+                let last = returns.pop();
+                returns.push({
+                    type: 'ReturnStatement',
+                    argument: last,
+                });
+                return returns;
+            } else if (ast.argument.type === 'ConditionalExpression') {
+                ret = returns
             } else {
                 ret = {
                     type: 'ReturnStatement',
-                    argument: value
+                    argument: returns,
                 };
-                return ret;
             }
-
+            return ret;
+        }
         case 'VariableDeclaration': {
             const rets = [];
             ast.declarations.forEach(declaration => { // 这里对分开每一个变量声明,var a,b => var a; var b;
@@ -142,12 +179,14 @@ function ast_reduce(ast, parent) {
             }
         }
         case 'ExpressionStatement':
-            if (ast.expression.type === 'ConditionalExpression') {
-                ast.expression.canbetransformed = true;
+
+            let expressions = ast_reduce_scoped(ast.expression);
+            if (expressions instanceof Array) {
+                return expressions;
             }
             ret = {
                 type: ast.type,
-                expression: ast_reduce_scoped(ast.expression)
+                expression: expressions
             };
 
             /// Transforms SequenceExpression a,b,c to BlockStatement a;b;c; but only if it is standalone (Ie not in another expression)
@@ -160,68 +199,30 @@ function ast_reduce(ast, parent) {
             v = 4;
             h = 4;
             */
-            if (ret.expression.type === 'SequenceExpression'
-                && (parent.type === 'BlockStatement' || parent.type === 'Program')
-            ) {
-                let _tmp = ret.expression.expressions.map(el => {
-                    return {type: 'ExpressionStatement', expression: el}
-                });
-                ret = {
-                    type: 'Program', // This is a hack because we need to return a ast node, and we actually have n nodes in a block.
-                    // so instead of using BlockStatement, which would be rewritten as {.expressions..}, we use Program
-                    // expressions are not surrounded by brackets.
-                    body: _tmp
-                };
-                parent.body[parent.body.indexOf(ast.expression)] = ret;
-                //parent.body.splice.apply(parent.body,[parent.body.indexOf(ast.expression),1].concat(_tmp));
-                return ret;
-            }
+
 
             return ret;
 
         case 'SequenceExpression': {
-
             const rets = [];
 
-            if (parent.type === 'ReturnStatement') { //
-
-                ast.expressions.forEach(function (expression, index) {
-                    if (index === ast.expressions.length - 1) {
-                        rets.push({
-                            type: 'ReturnStatement',
-                            argument: ast_reduce_scoped(expression),
-                        });
-                        return;
-                    }
+            ast.expressions.forEach(function (expression, index) {
+                if (expression.type === 'BinaryExpression' || expression.type === 'Identifier') {
+                    rets.push(ast_reduce_scoped(expression));
+                } else {
                     rets.push({
                         type: "ExpressionStatement",
                         expression: ast_reduce_scoped(expression)
                     });
-                });
-
-                return rets;
-
-            } else {
-                ret = {
-                    type: 'BlockStatement',
-                    body: []
-                };
-                rets.push(ret);
-                ast.expressions.forEach(function (expression, index) {
-                    ret.body.push({
-                        type: "ExpressionStatement",
-                        expression: ast_reduce_scoped(expression)
-                    });
-                });
-
-                return ret;
-            }
+                }
+            });
+            return rets;
 
         }
 
         case 'ConditionalExpression': // a?b:c
 
-            let getExpression = function getExpression(parentVar, target) {
+            let getAssignExpression = function (parentVar, target) {
                 let block = {
                     type: 'BlockStatement',
                     body: []
@@ -246,6 +247,20 @@ function ast_reduce(ast, parent) {
                 // return block;// 返回这个会有花括号
             };
 
+            let getReturnExpression = function (target) {
+                let returnExp = {
+                    type: 'ReturnStatement',
+                    // argument: last,
+                };
+                let childResult = ast_reduce(target, returnExp);
+                if (target.type === 'ConditionalExpression') {
+                    returnExp = childResult; // 这里 childResult 将是一个if语句
+                } else {
+                    returnExp.argument = childResult;
+                }
+                return returnExp;
+            };
+
             if (parent.type === 'AssignmentExpression' || parent.type === 'VariableDeclarator') {
                 // 例子: x= a?b:c
                 // parentVar 代表x
@@ -258,8 +273,8 @@ function ast_reduce(ast, parent) {
                     parentVar = ast_reduce(parent.id, parent);
                 }
 
-                let block1 = getExpression(parentVar, ast.consequent);
-                let block2 = getExpression(parentVar, ast.alternate);
+                let block1 = getAssignExpression(parentVar, ast.consequent);
+                let block2 = getAssignExpression(parentVar, ast.alternate);
 
                 ret = {
                     type: 'IfStatement',
@@ -268,6 +283,13 @@ function ast_reduce(ast, parent) {
                     alternate: block2
                 };
 
+            } else if (parent.type === 'ReturnStatement') {
+                ret = {
+                    type: 'IfStatement',
+                    test: ast_reduce_scoped(ast.test), //Expand or Not? Lookahead?
+                    consequent: getReturnExpression(ast.consequent),
+                    alternate: getReturnExpression(ast.alternate)
+                };
             }
             else {
                 let consequent = ast_reduce_scoped(ast.consequent);

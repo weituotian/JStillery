@@ -9,11 +9,30 @@ var c=a>b?1:e>f?2:3
 a>b?c=1:e>f?g=2:h>i?j=4:k=5
 var v1=a>b?c=1:e>f?g=2:h>i?j=4:k=5
 
+var a = 1;
+var b = 2;
+if (a++, b++, a < b) {
+    console.log('a<b')
+}
 
+function test(){
+  return a=1,b=2,c
+}
+
+a++, b++, a>1 && c++;
+return a>b?1:2
+
+function test(a){
+  return a>1?'a':'b'
+}
+function test(a){
+  return a>1?c>d?'e':'f':'b'
+}
 ```
 
 # JStillery
-
+ https://github.com/mindedsecurity/JStillery
+ 
 Advanced JS Deobfuscation via Partial Evaluation.
 
 
