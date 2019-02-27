@@ -10,6 +10,7 @@ var express = require('express');
 
 // Jstillery / Custom AST
 var esdeob = require('../src/jstiller.js');
+var myDeob = require('../src/my-deobfuscate');
 var pass = require("../src/custom_esmangle_pipeline.js").createPipeline;
 
 // Custom
@@ -58,7 +59,8 @@ app.post(server_config.rest_api_deobfuscate, function (req, res) {
             console.error("[II] Mangle normalization were not performed due to errors. the code is going to be passed as it is to JSTillery");
         }
         esdeob.init();
-        ast = esdeob.deobfuscate(ast, null, true);
+        // ast = esdeob.deobfuscate(ast, null, true);
+        ast = myDeob.deobfuscate(ast, null, true);
 
         var reduced = escodegen.generate(ast, {
             comment: true
