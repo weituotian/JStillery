@@ -28,6 +28,8 @@ function test(a){
 function test(a){
   return a>1?c>d?'e':'f':'b'
 }
+
+!(0 >= b[c] || b[c] > originTotalPageCount || (this.pageArray[b[c]] && this.fillContent(b[c]), this.pageArray[b[c]]))
 ```
 
 # JStillery

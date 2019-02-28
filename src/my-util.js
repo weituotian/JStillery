@@ -162,7 +162,6 @@ exports.uoperators = {
 };*/
 
 
-
 class BaseStatement {
 
     constructor() {
@@ -175,7 +174,7 @@ class BaseStatement {
 
 }
 
-exports.BlockStatement = class BlockStatement extends BaseStatement {
+class BlockStatement extends BaseStatement {
 
     constructor() {
         super();
@@ -200,7 +199,7 @@ exports.BlockStatement = class BlockStatement extends BaseStatement {
 
 };
 
-exports.IfStatement = class IfStatement extends BaseStatement {
+class IfStatement extends BaseStatement {
 
     constructor() {
         super();
@@ -232,7 +231,7 @@ exports.IfStatement = class IfStatement extends BaseStatement {
     }
 };
 
-exports.ExpressionStatement = class ExpressionStatement extends BaseStatement {
+class ExpressionStatement extends BaseStatement {
 
     constructor() {
         super();
@@ -252,3 +251,58 @@ exports.ExpressionStatement = class ExpressionStatement extends BaseStatement {
     }
 
 };
+
+class UnaryExpression extends BaseStatement {
+
+    constructor() {
+        super();
+        this._ast = {
+            type: 'UnaryExpression',
+            operator: "!",
+            argument: undefined,
+            prefix: true
+        };
+    }
+
+    static create() {
+        return new UnaryExpression();
+    }
+
+    argument(argument) {
+        this._ast.argument = argument;
+        return this;
+    }
+};
+
+class StatementGenerator extends BaseStatement {
+
+    constructor(ast) {
+        super();
+        this._ast = ast;
+    }
+
+    static create(ast) {
+        return new StatementGenerator(ast);
+    }
+
+    wrapExpression() {
+        this._ast = ExpressionStatement.create().expression(this._ast).ast;
+        return this;
+    }
+
+    wrapBlock() {
+        this._ast = BlockStatement.create().add(this._ast).ast;
+        return this;
+    }
+
+    wrapUnary() {
+        this._ast = UnaryExpression.create().argument(this._ast).ast;
+        return this;
+    }
+};
+
+exports.BlockStatement = BlockStatement;
+exports.IfStatement = IfStatement;
+exports.ExpressionStatement = ExpressionStatement;
+exports.UnaryExpression = UnaryExpression;
+exports.StatementGenerator = StatementGenerator;

@@ -176,15 +176,25 @@ function ast_reduce(ast, parent) {
             let left = ast_reduce_scoped(ast.left);
             let right = ast_reduce_scoped(ast.right);
 
-            if (parent.type !== 'LogicalExpression' && parent.type !== 'IfStatement') {
-                if (ast.operator === '&&') {
+            if (parent.type !== 'LogicalExpression'
+                && parent.type !== 'IfStatement'
+                && parent.type !== 'UnaryExpression'
+                && (parent.type !== 'ConditionalExpression' || parent.test !== ast)) {
+
+                if (!(right instanceof Array) && right.type !== 'ExpressionStatement') {
                     right = MyUtil.ExpressionStatement.create().expression(right).ast;
+                }
+
+                if (ast.operator === '&&') {
+                    // right = MyUtil.BlockStatement.create().add(right).ast;
+                    right = MyUtil.StatementGenerator.create(right).wrapBlock().ast; // wrapExpression()
+                    return MyUtil.IfStatement.create().test(left).consequent(right).ast;
+                }
+                else if (ast.operator === '||') {
+                    left = MyUtil.UnaryExpression.create().argument(left).ast;
                     right = MyUtil.BlockStatement.create().add(right).ast;
                     return MyUtil.IfStatement.create().test(left).consequent(right).ast;
                 }
-                /*else if (ast.operator === '||') {
-                               return MyUtil.IfStatement.create().test(left).consequent(right).ast;
-                           }*/
             }
 
             return {
@@ -292,6 +302,8 @@ function ast_reduce(ast, parent) {
 
             let expressions = ast_reduce_scoped(ast.expression);
             if (expressions instanceof Array) {
+                return expressions;
+            } else if (expressions.type === 'IfStatement') {
                 return expressions;
             }
             ret = {
