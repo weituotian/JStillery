@@ -1,4 +1,5 @@
 var genCode = require("escodegen").generate;
+var MyUtil = require("./my-util");
 
 var reduceContext = {};
 
@@ -51,16 +52,44 @@ function ast_reduce(ast, parent) {
                 expression: ast.expression
             };
             return ret;
-
+        case 'FunctionExpression': {
+            ret = {
+                type: ast.type,
+                id: ast.id,
+                params: ast.params,
+                defaults: ast.defaults,
+                body: ast_reduce_scoped(ast.body),
+                test: ast.test,
+                generator: ast.generator,
+                alreadyReduced: true,
+                expression: ast.expression
+            };
+            return ret;
+        }
+        case 'CallExpression': {
+            ret = {
+                type: 'CallExpression',
+                arguments: arr_ast_reduce(ast.arguments),
+                callee: ast_reduce_scoped(ast.callee)
+            };
+            return ret
+        }
         case 'IfStatement': {
 
             let tests = ast_reduce_scoped(ast.test);
             let consequent1 = ast_reduce_scoped(ast.consequent);
             let alternate1 = ast_reduce_scoped(ast.alternate);
 
+            if (consequent1 instanceof Array) {
+                consequent1 = MyUtil.BlockStatement.create().add(consequent1).ast;
+            }
+
             if (tests instanceof Array) { // 如果if表达式里面有很多语句，分开
 
                 let last = tests.pop();
+                if (last.type === 'ExpressionStatement') {
+                    last = last.expression;
+                }
                 tests.push({
                     type: 'IfStatement',
                     test: last,
@@ -78,6 +107,43 @@ function ast_reduce(ast, parent) {
                 };
                 return ret;
             }
+
+        }
+        case 'ForStatement': {
+
+            let inits = ast_reduce_scoped(ast.init);
+            let test = ast_reduce_scoped(ast.test);
+            let update = ast_reduce_scoped(ast.update);
+            let body = ast_reduce_scoped(ast.body);
+
+            if (body instanceof Array) {
+                body = MyUtil.BlockStatement.create().add(body).ast;
+            }
+
+
+            if (inits instanceof Array) { // for的初始化语句可能有comma表达式
+                let last = inits.pop();
+                if (last.type === 'ExpressionStatement') {
+                    last = last.expression;
+                }
+                inits.push({
+                    type: ast.type,
+                    init: last,
+                    test: test,
+                    update: update,
+                    body: body
+                });
+                return inits;
+            }
+            ret = {
+                type: ast.type,
+                init: inits,
+                test: test,
+                update: update,
+                body: body
+            };
+
+            return ret;
 
         }
         case 'AssignmentExpression':
@@ -102,6 +168,50 @@ function ast_reduce(ast, parent) {
             };
 
             return ret;
+
+        case 'Literal':
+            return MyUtil.mkliteral(ast.value, ast.raw);
+        case 'LogicalExpression': {
+            // 转换为 if
+            let left = ast_reduce_scoped(ast.left);
+            let right = ast_reduce_scoped(ast.right);
+
+            if (parent.type !== 'LogicalExpression' && parent.type !== 'IfStatement') {
+                if (ast.operator === '&&') {
+                    right = MyUtil.ExpressionStatement.create().expression(right).ast;
+                    right = MyUtil.BlockStatement.create().add(right).ast;
+                    return MyUtil.IfStatement.create().test(left).consequent(right).ast;
+                }
+                /*else if (ast.operator === '||') {
+                               return MyUtil.IfStatement.create().test(left).consequent(right).ast;
+                           }*/
+            }
+
+            return {
+                type: ast.type,
+                operator: ast.operator,
+                left: left,
+                right: right
+            };
+        }
+        case 'UnaryExpression': {
+
+            let arg = ast_reduce_scoped(ast.argument); // 可能是一个literal
+
+            if (arg.pure && ast.operator in MyUtil.uoperators) {
+
+                return MyUtil.mkliteral(MyUtil.uoperators[ast.operator](arg.value));
+            }
+
+            let ret = {
+                "type": ast.type,
+                "operator": ast.operator,
+                "argument": arg,
+                "prefix": ast.prefix
+            };
+            return ret;
+
+        }
 
         case 'ReturnStatement': {
             if (ast.argument == null) {

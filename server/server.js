@@ -63,7 +63,10 @@ app.post(server_config.rest_api_deobfuscate, function (req, res) {
         ast = myDeob.deobfuscate(ast, null, true);
 
         var reduced = escodegen.generate(ast, {
-            comment: true
+            comment: true,
+            moz: {
+                parenthesizedComprehensionBlock: true
+            }
         });
 
         res.status(200);
